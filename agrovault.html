@@ -1,0 +1,1590 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Allium Guard — Smart Crop Storage Monitor</title>
+<meta name="description" content="Allium Guard real-time BLE dashboard for crop storage monitoring with ML risk prediction">
+
+<!-- PWA Meta Tags -->
+<link rel="manifest" href="./manifest.json">
+<meta name="theme-color" content="#00e676">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="AlliumGuard">
+<link rel="apple-touch-icon" href="./icon-512.png">
+<link rel="icon" type="image/png" sizes="512x512" href="./icon-512.png">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#06080c;--bg2:#0c1017;--bg3:#121820;--bg4:#1a2030;--bg5:#222a3a;
+  --surface:#141a24;--surface2:#1c2432;
+  --border:#1e2838;--border2:#2a3648;--border3:#384860;
+  --green:#00e676;--green2:#00c853;--green3:#69f0ae;--green-bg:rgba(0,230,118,.06);--green-border:rgba(0,230,118,.18);
+  --amber:#ffab00;--amber2:#ff8f00;--amber3:#ffd740;--amber-bg:rgba(255,171,0,.06);--amber-border:rgba(255,171,0,.18);
+  --red:#ff1744;--red2:#d50000;--red3:#ff5252;--red-bg:rgba(255,23,68,.06);--red-border:rgba(255,23,68,.18);
+  --blue:#40c4ff;--blue2:#0091ea;--blue3:#80d8ff;--blue-bg:rgba(64,196,255,.06);--blue-border:rgba(64,196,255,.18);
+  --purple:#b388ff;--purple2:#7c4dff;--purple-bg:rgba(179,136,255,.06);
+  --cyan:#18ffff;--cyan2:#00e5ff;
+  --text:#eef0f6;--text2:#94a3b8;--text3:#5a6a80;--text4:#3a4a5e;
+  --radius:12px;--radius-sm:8px;--radius-xs:6px;
+  --shadow:0 4px 24px rgba(0,0,0,.4),0 1px 3px rgba(0,0,0,.3);
+  --shadow-lg:0 8px 40px rgba(0,0,0,.6),0 2px 8px rgba(0,0,0,.4);
+  --glow-green:0 0 20px rgba(0,230,118,.15);
+  --glow-red:0 0 20px rgba(255,23,68,.15);
+  --glow-amber:0 0 20px rgba(255,171,0,.15);
+  --transition:all .3s cubic-bezier(.4,0,.2,1);
+}
+html{font-size:14px}
+body{background:var(--bg);color:var(--text);font-family:'Inter',system-ui,sans-serif;min-height:100vh;overflow-x:hidden;-webkit-font-smoothing:antialiased}
+
+/* ═══ SCROLLBAR ═══ */
+::-webkit-scrollbar{width:6px}
+::-webkit-scrollbar-track{background:var(--bg2)}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px}
+::-webkit-scrollbar-thumb:hover{background:var(--border3)}
+
+/* ═══ CONNECT SCREEN ═══ */
+#connect-screen{position:fixed;inset:0;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:1000;gap:28px}
+.connect-bg{position:absolute;inset:0;overflow:hidden;pointer-events:none}
+.connect-bg::before{content:'';position:absolute;top:-50%;left:-50%;width:200%;height:200%;background:radial-gradient(ellipse at 30% 50%,rgba(0,230,118,.03) 0%,transparent 50%),radial-gradient(ellipse at 70% 50%,rgba(64,196,255,.03) 0%,transparent 50%);animation:bgpulse 8s ease-in-out infinite alternate}
+@keyframes bgpulse{from{transform:rotate(0deg)}to{transform:rotate(3deg)}}
+.connect-content{position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;gap:28px}
+.connect-logo{font-size:2.8rem;font-weight:900;letter-spacing:-1.5px;line-height:1}
+.connect-logo .logo-allium{background:linear-gradient(135deg,var(--green),var(--cyan2));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.connect-logo .logo-guard{color:var(--text2);font-weight:300}
+.connect-sub{font-family:'JetBrains Mono',monospace;font-size:.7rem;color:var(--text3);letter-spacing:3px;text-transform:uppercase;text-align:center}
+
+.ble-orb{width:120px;height:120px;border-radius:50%;background:radial-gradient(circle at 40% 35%,var(--bg4),var(--bg2));border:1px solid var(--border2);display:flex;align-items:center;justify-content:center;position:relative;cursor:pointer;transition:var(--transition)}
+.ble-orb:hover{border-color:var(--green);box-shadow:var(--glow-green)}
+.ble-orb svg{width:40px;height:40px;fill:none;stroke:var(--green);stroke-width:1.5;opacity:.7;transition:var(--transition)}
+.ble-orb:hover svg{opacity:1;transform:scale(1.1)}
+.ble-orb::before,.ble-orb::after{content:'';position:absolute;border-radius:50%;border:1px solid var(--green-border);animation:orbpulse 3s ease-in-out infinite}
+.ble-orb::before{inset:-12px;animation-delay:0s}
+.ble-orb::after{inset:-26px;opacity:.5;animation-delay:1s}
+@keyframes orbpulse{0%,100%{opacity:.2;transform:scale(1)}50%{opacity:.5;transform:scale(1.03)}}
+
+#connect-btn{background:linear-gradient(135deg,rgba(0,230,118,.12),rgba(0,200,83,.08));border:1px solid var(--green-border);color:var(--green);font-family:'Inter',sans-serif;font-size:.85rem;font-weight:700;letter-spacing:1.5px;padding:14px 40px;border-radius:var(--radius);cursor:pointer;text-transform:uppercase;transition:var(--transition);position:relative;overflow:hidden}
+#connect-btn::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,var(--green),var(--green2));opacity:0;transition:opacity .3s}
+#connect-btn:hover:not(:disabled){box-shadow:var(--glow-green)}
+#connect-btn:hover:not(:disabled)::before{opacity:1}
+#connect-btn:hover:not(:disabled){color:#000;font-weight:800}
+#connect-btn span{position:relative;z-index:1}
+#connect-btn:disabled{opacity:.3;cursor:not-allowed}
+
+/* PWA Install Button */
+#pwa-install-btn{display:none;align-items:center;gap:8px;background:linear-gradient(135deg,rgba(64,196,255,.12),rgba(0,145,234,.08));border:1px solid var(--blue-border);color:var(--blue);font-family:'Inter',sans-serif;font-size:.75rem;font-weight:700;letter-spacing:1px;padding:10px 24px;border-radius:var(--radius);cursor:pointer;text-transform:uppercase;transition:var(--transition);position:relative;overflow:hidden}
+#pwa-install-btn:hover{box-shadow:0 0 20px rgba(64,196,255,.2);border-color:var(--blue);background:linear-gradient(135deg,rgba(64,196,255,.2),rgba(0,145,234,.15))}
+#pwa-install-btn svg{width:16px;height:16px;flex-shrink:0}
+
+/* PWA Install Toast */
+#pwa-toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(100px);background:var(--bg3);border:1px solid var(--green-border);border-radius:var(--radius);padding:12px 20px;display:flex;align-items:center;gap:12px;font-size:.72rem;font-family:'JetBrains Mono',monospace;color:var(--text2);z-index:9999;transition:transform .4s cubic-bezier(.4,0,.2,1);box-shadow:var(--shadow-lg);white-space:nowrap}
+#pwa-toast.show{transform:translateX(-50%) translateY(0)}
+#pwa-toast-icon{font-size:1.1rem}
+#pwa-toast-close{margin-left:8px;cursor:pointer;opacity:.5;font-size:.9rem;transition:opacity .2s}
+#pwa-toast-close:hover{opacity:1}
+
+#connect-status{font-family:'JetBrains Mono',monospace;font-size:.72rem;color:var(--text3);min-height:20px;text-align:center;max-width:340px;line-height:1.8;transition:color .3s}
+#connect-status.error{color:var(--red)}
+
+.connect-info{display:flex;flex-direction:column;gap:8px;font-size:.72rem;color:var(--text4);font-family:'JetBrains Mono',monospace;text-align:center;max-width:300px;line-height:1.7;padding:16px 20px;border:1px solid var(--border);border-radius:var(--radius);background:var(--surface)}
+.connect-info strong{color:var(--text3);font-weight:600}
+
+/* ═══ DASHBOARD LAYOUT ═══ */
+#dashboard {
+  display:none; flex-direction:column; min-height:100vh;
+  /* Premium Industrial Sage & Slate-Green Theme */
+  --bg: #d1ded6; --bg2: #dae6df; --bg3: #c5d5ca; --bg4: #b6c8bc; --bg5: #a3b6a9;
+  --surface: #e4ede7; --surface2: #dae6df;
+  --border: #b6c8bc; --border2: #a3b6a9; --border3: #8da093;
+  --green: #0fa968; --green2: #0b804e; --green3: #34d399; 
+  --green-bg: rgba(15,169,104,0.1); --green-border: rgba(15,169,104,0.25);
+  --amber: #e78c00; --amber2: #c47600; --amber3: #f5a623;
+  --amber-bg: rgba(231,140,0,0.1); --amber-border: rgba(231,140,0,0.25);
+  --red: #e11d48; --red2: #be123c; --red3: #fb7185;
+  --red-bg: rgba(225,29,72,0.1); --red-border: rgba(225,29,72,0.25);
+  --blue: #0284c7; --blue2: #0369a1; --blue3: #38bdf8;
+  --blue-bg: rgba(2,132,199,0.1); --blue-border: rgba(2,132,199,0.25);
+  --purple: #7c3aed; --purple2: #6d28d9; --purple-bg: rgba(124,58,237,0.1);
+  --cyan: #0891b2; --cyan2: #0e7490;
+  --text: #102219; --text2: #273f32; --text3: #486052; --text4: #6d8276;
+  --shadow: 0 4px 15px rgba(16,34,25,0.04), 0 1px 3px rgba(16,34,25,0.03);
+  --shadow-lg: 0 8px 30px rgba(16,34,25,0.07), 0 2px 8px rgba(16,34,25,0.05);
+  --glow-green: 0 0 15px rgba(15,169,104,0.2);
+  --glow-red: 0 0 15px rgba(225,29,72,0.2);
+  --glow-amber: 0 0 15px rgba(231,140,0,0.2);
+  background: var(--bg); color: var(--text);
+}
+
+/* Fan Control Center Buttons */
+.fan-btn {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.65rem;
+  font-weight: 700;
+  padding: 6px 12px;
+  border-radius: var(--radius-xs);
+  border: 1px solid var(--border2);
+  background: var(--bg3);
+  color: var(--text2);
+  cursor: pointer;
+  transition: var(--transition);
+  text-transform: uppercase;
+}
+.fan-btn:hover {
+  background: var(--bg4);
+  color: var(--text);
+  border-color: var(--border3);
+}
+.fan-btn.active {
+  background: var(--green);
+  color: #fff;
+  border-color: var(--green2);
+  box-shadow: var(--glow-green);
+}
+#btn-fan-on.active {
+  background: var(--amber);
+  color: #fff;
+  border-color: var(--amber2);
+  box-shadow: var(--glow-amber);
+}
+#btn-fan-off.active {
+  background: var(--red);
+  color: #fff;
+  border-color: var(--red2);
+  box-shadow: var(--glow-red);
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+.fan-spin {
+  display: inline-block;
+  animation: spin 2s linear infinite;
+}
+
+/* ─── TOPBAR ─── */
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:0 20px;height:52px;border-bottom:1px solid var(--border);background:var(--bg2);flex-shrink:0;position:sticky;top:0;z-index:100;backdrop-filter:blur(12px)}
+.brand{display:flex;align-items:center;gap:10px}
+.brand-icon{width:30px;height:30px;background:linear-gradient(135deg,var(--green),var(--blue));border-radius:8px;display:flex;align-items:center;justify-content:center}
+.brand-icon svg{width:16px;height:16px;fill:white}
+.brand-name{font-size:.95rem;font-weight:800;letter-spacing:.3px}
+.brand-name .b-allium{color:var(--text)}
+.brand-name .b-guard{color:var(--green)}
+.topbar-right{display:flex;align-items:center;gap:12px}
+.status-pill{display:flex;align-items:center;gap:6px;font-size:.68rem;font-family:'JetBrains Mono',monospace;color:var(--text2);background:var(--surface);padding:5px 12px;border-radius:20px;border:1px solid var(--border)}
+.dot-live{width:6px;height:6px;border-radius:50%;background:var(--green);box-shadow:0 0 6px var(--green);animation:dotpulse 2s ease-in-out infinite;flex-shrink:0}
+.dot-disc{background:var(--red)!important;box-shadow:0 0 6px var(--red)!important;animation:none!important}
+@keyframes dotpulse{0%,100%{opacity:1}50%{opacity:.4}}
+.clock{font-family:'JetBrains Mono',monospace;font-size:.68rem;color:var(--text3)}
+#disconnect-btn{font-family:'JetBrains Mono',monospace;font-size:.62rem;color:var(--red);background:var(--red-bg);border:1px solid var(--red-border);padding:5px 12px;border-radius:var(--radius-xs);cursor:pointer;letter-spacing:.5px;font-weight:600;transition:var(--transition)}
+#disconnect-btn:hover{background:rgba(255,23,68,.15);border-color:var(--red)}
+
+/* ─── ALERT BANNER ─── */
+.alert-banner{display:none;padding:8px 20px;font-family:'JetBrains Mono',monospace;font-size:.72rem;font-weight:600;letter-spacing:.5px;border-bottom:1px solid;animation:alertSlide .4s ease}
+@keyframes alertSlide{from{transform:translateY(-100%);opacity:0}to{transform:translateY(0);opacity:1}}
+.alert-banner.watch{display:flex;background:var(--blue-bg);border-color:var(--blue-border);color:var(--blue)}
+.alert-banner.warning{display:flex;background:var(--amber-bg);border-color:var(--amber-border);color:var(--amber);animation:alertSlide .4s ease,alertFlash 2s ease-in-out infinite}
+.alert-banner.critical{display:flex;background:var(--red-bg);border-color:var(--red-border);color:var(--red);animation:alertSlide .4s ease,alertFlash .8s ease-in-out infinite}
+@keyframes alertFlash{0%,100%{opacity:1}50%{opacity:.7}}
+.alert-banner .alert-icon{margin-right:10px;font-size:.9rem}
+.alert-banner .alert-dismiss{margin-left:auto;cursor:pointer;opacity:.6;font-size:.8rem}
+.alert-banner .alert-dismiss:hover{opacity:1}
+
+/*  MAIN GRID  */
+.main-grid{display:flex;flex-direction:column;flex:1;overflow-y:auto;overflow-x:hidden}
+@media(min-width:1024px){.main-grid{display:grid;grid-template-columns:1fr 260px}}
+
+/*  CENTER PANEL  */
+.center-panel{overflow-y:auto;padding:16px 20px 40px;display:flex;flex-direction:column;gap:16px}
+
+/* ─── SECTION HEADERS ─── */
+.section-header{display:flex;align-items:center;gap:8px;margin-bottom:2px}
+.section-header h2{font-size:.72rem;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--text3)}
+.section-header::after{content:'';flex:1;height:1px;background:var(--border)}
+
+/* ─── HERO METRICS ─── */
+.hero-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px}
+.metric-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;position:relative;overflow:hidden;transition:var(--transition);cursor:default}
+.metric-card:hover{border-color:var(--border2);transform:translateY(-1px);box-shadow:var(--shadow)}
+.metric-card.state-watch{border-color:var(--blue-border);background:var(--blue-bg)}
+.metric-card.state-warning{border-color:var(--amber-border);background:var(--amber-bg)}
+.metric-card.state-critical{border-color:var(--red-border);background:var(--red-bg);animation:cardPulse 1.5s ease-in-out infinite}
+@keyframes cardPulse{0%,100%{box-shadow:none}50%{box-shadow:var(--glow-red)}}
+.m-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.m-label{font-size:.65rem;color:var(--text3);font-family:'JetBrains Mono',monospace;letter-spacing:.8px;text-transform:uppercase;font-weight:500}
+.m-icon{font-size:.85rem;opacity:.5}
+.m-value-row{display:flex;align-items:baseline;gap:4px}
+.m-value{font-size:1.7rem;font-weight:800;font-family:'JetBrains Mono',monospace;line-height:1;letter-spacing:-1px;transition:color .3s}
+.m-unit{font-size:.72rem;font-weight:400;color:var(--text2)}
+.m-sub{font-size:.62rem;color:var(--text3);margin-top:6px;font-family:'JetBrains Mono',monospace;line-height:1.4}
+.m-bar{position:absolute;bottom:0;left:0;height:2px;border-radius:0 1px 0 0;transition:width .6s cubic-bezier(.4,0,.2,1),background .3s}
+
+/* ─── STATUS BADGE ─── */
+.status-badge{display:inline-flex;align-items:center;gap:6px;padding:6px 16px;border-radius:20px;font-size:.72rem;font-weight:700;font-family:'JetBrains Mono',monospace;letter-spacing:.8px;transition:var(--transition)}
+.badge-safe{background:var(--green-bg);color:var(--green);border:1px solid var(--green-border)}
+.badge-watch{background:var(--blue-bg);color:var(--blue);border:1px solid var(--blue-border)}
+.badge-warning{background:var(--amber-bg);color:var(--amber);border:1px solid var(--amber-border);animation:badgeWarn 1.5s ease-in-out infinite alternate}
+.badge-critical{background:var(--red-bg);color:var(--red);border:1px solid var(--red-border);animation:badgeCrit .5s ease-in-out infinite alternate}
+@keyframes badgeWarn{from{box-shadow:none}to{box-shadow:var(--glow-amber)}}
+@keyframes badgeCrit{from{box-shadow:none}to{box-shadow:var(--glow-red)}}
+
+/* ─── TABS ─── */
+.tabs-container{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden}
+.tabs-row{display:flex;border-bottom:1px solid var(--border);overflow-x:auto;-webkit-overflow-scrolling:touch}
+.tab-btn{padding:10px 18px;font-size:.72rem;font-weight:600;color:var(--text3);cursor:pointer;border:none;background:none;border-bottom:2px solid transparent;font-family:'Inter',sans-serif;transition:var(--transition);white-space:nowrap;letter-spacing:.3px}
+.tab-btn:hover{color:var(--text2);background:rgba(255,255,255,.02)}
+.tab-btn.active{color:var(--green);border-bottom-color:var(--green)}
+.tab-content{padding:16px;display:none;animation:tabIn .3s ease}
+.tab-content.active{display:block}
+@keyframes tabIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
+
+/* ─── CHARTS ─── */
+.chart-wrap{position:relative;width:100%;height:200px}
+.chart-legend{display:flex;gap:16px;margin-bottom:10px;flex-wrap:wrap}
+.legend-item{display:flex;align-items:center;gap:6px;font-size:.65rem;font-family:'JetBrains Mono',monospace;color:var(--text2)}
+.legend-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+
+/* ─── ACTION CARDS ─── */
+.action-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+@media(max-width:640px){.action-grid{grid-template-columns:1fr}}
+.action-card{background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px 14px;transition:var(--transition)}
+.action-card .a-title{font-size:.68rem;font-weight:700;letter-spacing:.5px;margin-bottom:4px;text-transform:uppercase;color:var(--text2)}
+.action-card .a-body{font-size:.7rem;color:var(--text3);line-height:1.5}
+.action-card.active-watch{border-color:var(--blue-border);background:var(--blue-bg)}.action-card.active-watch .a-title{color:var(--blue)}
+.action-card.active-warning{border-color:var(--amber-border);background:var(--amber-bg)}.action-card.active-warning .a-title{color:var(--amber)}
+.action-card.active-critical{border-color:var(--red-border);background:var(--red-bg)}.action-card.active-critical .a-title{color:var(--red)}
+
+/* ─── PREDICTION TIMELINE ─── */
+.pred-row{display:flex;align-items:center;gap:10px;padding:8px 12px;background:var(--bg3);border-radius:var(--radius-xs);border:1px solid var(--border)}
+.pred-time{font-size:.62rem;font-family:'JetBrains Mono',monospace;color:var(--text3);min-width:36px}
+.pred-bar-wrap{flex:1;height:5px;background:var(--bg4);border-radius:3px;overflow:hidden}
+.pred-bar{height:100%;border-radius:3px;transition:width .8s cubic-bezier(.4,0,.2,1)}
+.pred-risk{font-size:.62rem;font-family:'JetBrains Mono',monospace;min-width:50px;text-align:right}
+.pred-label{font-size:.62rem;color:var(--text2);min-width:56px;font-family:'JetBrains Mono',monospace}
+
+/* ─── OLED SIM ─── */
+.oled-wrap{background:#000;border:2px solid #1a2a1a;border-radius:8px;padding:3px;width:280px;margin:0 auto 12px;box-shadow:inset 0 0 20px rgba(0,230,118,.03)}
+.oled-screen{background:#000;padding:10px 12px;font-family:'JetBrains Mono',monospace;font-size:.72rem;color:#00e676;line-height:1.8;border-radius:6px;min-height:80px;position:relative;overflow:hidden}
+.oled-screen::before{content:'';position:absolute;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,.12) 2px,rgba(0,0,0,.12) 3px);pointer-events:none;z-index:1}
+.oled-slide{display:none}
+.oled-slide.active{display:block;animation:oledIn .3s ease}
+@keyframes oledIn{from{opacity:0;transform:translateY(2px)}to{opacity:1;transform:translateY(0)}}
+.oled-dots{display:flex;justify-content:center;gap:6px;margin-top:6px}
+.oled-dot{width:5px;height:5px;border-radius:50%;background:var(--border2);transition:var(--transition)}
+.oled-dot.active{background:var(--green);box-shadow:0 0 4px var(--green)}
+
+/* ─── RIGHT PANEL ─── */
+.right-panel{border-left:1px solid var(--border);background:var(--bg2);display:flex;flex-direction:column;overflow-y:auto}
+@media(max-width:1023px){.right-panel{border-left:none;border-top:1px solid var(--border)}}
+.rp-section{padding:14px 16px;border-bottom:1px solid var(--border)}
+.rp-header{font-size:.62rem;font-weight:700;letter-spacing:1.5px;color:var(--text4);text-transform:uppercase;margin-bottom:10px;display:flex;align-items:center;gap:6px}
+
+/* ─── LEDs ─── */
+.leds-row{display:flex;gap:18px;justify-content:center}
+.led-wrap{display:flex;flex-direction:column;align-items:center;gap:5px}
+.led{width:14px;height:14px;border-radius:50%;transition:var(--transition)}
+.led-off{background:var(--bg4);border:1px solid var(--border)}
+.led-green{background:var(--green);box-shadow:0 0 10px var(--green),0 0 20px rgba(0,230,118,.3);animation:ledBreathe 2.5s ease-in-out infinite}
+.led-blue{background:var(--blue);box-shadow:0 0 10px var(--blue),0 0 20px rgba(64,196,255,.3)}
+.led-yellow{background:var(--amber);box-shadow:0 0 10px var(--amber),0 0 20px rgba(255,171,0,.3)}
+.led-red{background:var(--red);box-shadow:0 0 10px var(--red),0 0 20px rgba(255,23,68,.3);animation:ledBlink .4s ease-in-out infinite alternate}
+@keyframes ledBreathe{0%,100%{opacity:.4;transform:scale(.9)}50%{opacity:1;transform:scale(1)}}
+@keyframes ledBlink{from{opacity:.3}to{opacity:1}}
+.led-label{font-size:.55rem;color:var(--text4);font-family:'JetBrains Mono',monospace;letter-spacing:.5px}
+
+/* ─── RELAY/BUZZER ─── */
+.relay-row{display:flex;gap:8px}
+.relay-ind{flex:1;padding:8px 10px;border-radius:var(--radius-xs);background:var(--surface);border:1px solid var(--border);display:flex;align-items:center;gap:8px;transition:var(--transition)}
+.relay-ind.on-relay{border-color:var(--amber-border);background:var(--amber-bg)}
+.relay-ind.on-buzzer{border-color:var(--red-border);background:var(--red-bg)}
+.ri-dot{width:7px;height:7px;border-radius:50%;background:var(--border2);flex-shrink:0;transition:var(--transition)}
+.relay-ind.on-relay .ri-dot{background:var(--amber);box-shadow:0 0 6px var(--amber)}
+.relay-ind.on-buzzer .ri-dot{background:var(--red);box-shadow:0 0 6px var(--red);animation:ledBlink .3s infinite alternate}
+.ri-name{font-family:'JetBrains Mono',monospace;font-size:.6rem;color:var(--text3);letter-spacing:.5px}
+
+/* ─── BLE RAW ─── */
+.ble-payload{background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px;font-family:'JetBrains Mono',monospace;font-size:.6rem;line-height:2;display:flex;flex-wrap:wrap;gap:4px}
+.ble-byte{display:inline-flex;flex-direction:column;align-items:center;gap:1px;padding:2px 4px;border-radius:4px;background:var(--bg4)}
+.ble-val{font-size:.65rem;font-weight:700}
+.ble-key{font-size:.48rem;color:var(--text4);letter-spacing:.3px}
+
+/* ─── SYS INFO ─── */
+.sys-row{display:flex;justify-content:space-between;font-size:.62rem;font-family:'JetBrains Mono',monospace;padding:4px 0;border-bottom:1px solid var(--border)}
+.sys-row:last-child{border:none}
+.sys-k{color:var(--text4)}
+.sys-v{color:var(--text3)}
+.sys-v.ok{color:var(--green)}
+.sys-v.live{color:var(--blue)}
+.sys-v.warn{color:var(--amber)}
+.sys-v.crit{color:var(--red)}
+
+/* ─── CROP SELECTOR ─── */
+.crop-pills{display:flex;gap:4px;flex-wrap:wrap}
+.crop-pill{padding:6px 12px;border-radius:20px;font-size:.62rem;font-weight:600;font-family:'JetBrains Mono',monospace;background:var(--surface);border:1px solid var(--border);color:var(--text3);cursor:default;transition:var(--transition);letter-spacing:.3px}
+.crop-pill.active{background:var(--green-bg);border-color:var(--green-border);color:var(--green)}
+
+/* ─── ALERT LOG ─── */
+.alert-log{display:flex;flex-direction:column;gap:6px;max-height:160px;overflow-y:auto}
+.alert-log-entry{display:flex;align-items:center;gap:8px;padding:6px 10px;border-radius:var(--radius-xs);background:var(--bg3);border:1px solid var(--border);font-size:.6rem;font-family:'JetBrains Mono',monospace;animation:logIn .3s ease}
+@keyframes logIn{from{opacity:0;transform:translateX(-8px)}to{opacity:1;transform:translateX(0)}}
+.log-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+.log-time{color:var(--text4);min-width:52px}
+.log-msg{color:var(--text2);flex:1}
+
+/* ─── RESPONSIVE ─── */
+@media(max-width:768px){
+  .topbar{padding:0 12px;height:48px}
+  .center-panel{padding:12px 14px 32px}
+  .hero-row{grid-template-columns:repeat(2,1fr);gap:8px}
+  .m-value{font-size:1.4rem}
+  .rp-section{padding:12px 14px}
+  .action-grid{grid-template-columns:1fr}
+  .right-panel{order:-1;border-bottom:1px solid var(--border)}
+}
+@media(max-width:480px){
+  .hero-row{grid-template-columns:1fr}
+  .connect-logo{font-size:2rem}
+  .topbar{flex-wrap:wrap;height:auto;padding:8px 12px;gap:6px}
+}
+</style>
+</head>
+<body>
+
+<!-- ═══════════ CONNECT SCREEN ═══════════ -->
+<div id="connect-screen">
+  <div class="connect-bg"></div>
+  <div class="connect-content">
+    <div style="text-align:center">
+      <div class="connect-logo"><span class="logo-allium">Allium</span> <span class="logo-guard">Guard</span></div>
+      <div class="connect-sub" style="margin-top:8px">nRF52832 · SHT4x · Edge ML · BLE 4.2</div>
+    </div>
+    <div class="ble-orb" id="ble-orb" onclick="connectBLE()">
+      <svg viewBox="0 0 24 24"><path d="M7 7l10 10M17 7L7 17M12 2v20M17 7l-5-5M17 17l-5 5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </div>
+    <button id="connect-btn" onclick="connectBLE()"><span>Connect via Bluetooth</span></button>
+    <button id="pwa-install-btn" onclick="installPWA()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V3m0 12l-4-4m4 4l4-4"/><path d="M2 17l.621 2.485A2 2 0 004.561 21h14.878a2 2 0 001.94-1.515L22 17"/></svg>
+      <span>Add to Home Screen</span>
+    </button>
+    <div id="connect-status">Tap to scan for AlliumGuard device</div>
+    <div class="connect-info">
+      <strong>Fully offline — no internet needed</strong>
+      Requires Chrome or Edge (desktop / Android)<br>
+      Device advertises as <strong>AlliumGuard</strong><br>
+      20-byte GATT Notify · 5 characteristics<br>
+      Live data + Loss tracker + NUS reports
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ DASHBOARD ═══════════ -->
+<div id="dashboard">
+
+<!-- TOPBAR -->
+<div class="topbar">
+  <div class="brand">
+    <div class="brand-icon">
+      <svg viewBox="0 0 24 24"><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2zm0 18c-4.4 0-8-3.6-8-8s3.6-8 8-8 8 3.6 8 8-3.6 8-8 8z" fill="white"/><path d="M12 6v6l4 2" stroke="white" stroke-width="2" fill="none" stroke-linecap="round"/></svg>
+    </div>
+    <div class="brand-name"><span class="b-allium">Allium</span><span class="b-guard">Guard</span></div>
+  </div>
+  <div class="topbar-right">
+    <div class="crop-pills" id="crop-pills">
+      <div class="crop-pill active" id="cp-0">🧅 ONION</div>
+      <div class="crop-pill" id="cp-1">🥔 POTATO</div>
+      <div class="crop-pill" id="cp-2">🍅 TOMATO</div>
+    </div>
+    <div class="status-pill"><div class="dot-live" id="ble-dot"></div><span id="ble-txt">CONNECTED</span></div>
+    <div class="clock" id="clock">--:--:--</div>
+    <button id="disconnect-btn" onclick="disconnectBLE()">DISCONNECT</button>
+  </div>
+</div>
+
+<!-- ALERT BANNER -->
+<div class="alert-banner" id="alert-banner">
+  <span class="alert-icon" id="alert-icon">⚠</span>
+  <span id="alert-msg">--</span>
+  <span class="alert-dismiss" onclick="this.parentElement.style.display='none'">✕</span>
+</div>
+
+<div class="main-grid">
+<!-- ═══ CENTER PANEL ═══ -->
+<div class="center-panel">
+
+  <!-- STATUS ROW -->
+  <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
+    <div style="display:flex;align-items:center;gap:12px">
+      <span id="crop-title" style="font-size:1.1rem;font-weight:800;letter-spacing:.3px">🧅 ONION STORAGE</span>
+      <div class="status-badge badge-safe" id="status-badge">● SAFE</div>
+    </div>
+    <div style="font-family:'JetBrains Mono',monospace;font-size:.6rem;color:var(--text4)" id="cause-display">No active threat</div>
+  </div>
+
+  <!-- HERO METRICS -->
+  <div class="section-header"><h2>Live Sensor Data</h2></div>
+  <div class="hero-row" id="hero-metrics">
+    <!-- Temperature -->
+    <div class="metric-card" id="mc-temp">
+      <div class="m-header"><span class="m-label">Temperature</span><span class="m-icon">🌡️</span></div>
+      <div class="m-value-row"><span class="m-value" id="mv-temp">--</span><span class="m-unit">°C</span></div>
+      <div class="m-sub" id="ms-temp">Awaiting data…</div>
+      <div class="m-bar" id="mb-temp" style="width:0%"></div>
+    </div>
+    <!-- Humidity -->
+    <div class="metric-card" id="mc-hum">
+      <div class="m-header"><span class="m-label">Humidity</span><span class="m-icon">💧</span></div>
+      <div class="m-value-row"><span class="m-value" id="mv-hum">--</span><span class="m-unit">%RH</span></div>
+      <div class="m-sub" id="ms-hum">Awaiting data…</div>
+      <div class="m-bar" id="mb-hum" style="width:0%"></div>
+    </div>
+    <!-- VPD -->
+    <div class="metric-card" id="mc-vpd">
+      <div class="m-header"><span class="m-label">VPD</span><span class="m-icon">🌬️</span></div>
+      <div class="m-value-row"><span class="m-value" id="mv-vpd">--</span><span class="m-unit">kPa</span></div>
+      <div class="m-sub" id="ms-vpd">Vapour pressure deficit</div>
+      <div class="m-bar" id="mb-vpd" style="width:0%"></div>
+    </div>
+    <!-- Dew Point -->
+    <div class="metric-card" id="mc-dew">
+      <div class="m-header"><span class="m-label">Dew Point</span><span class="m-icon">🌫️</span></div>
+      <div class="m-value-row"><span class="m-value" id="mv-dew">--</span><span class="m-unit">°C</span></div>
+      <div class="m-sub" id="ms-dew">Condensation margin</div>
+      <div class="m-bar" id="mb-dew" style="width:0%"></div>
+    </div>
+    <!-- Absolute Humidity -->
+    <div class="metric-card" id="mc-ah">
+      <div class="m-header"><span class="m-label">Abs. Humidity</span><span class="m-icon">☁️</span></div>
+      <div class="m-value-row"><span class="m-value" id="mv-ah">--</span><span class="m-unit">g/m³</span></div>
+      <div class="m-sub" id="ms-ah">Moisture density</div>
+      <div class="m-bar" id="mb-ah" style="width:0%"></div>
+    </div>
+    <!-- Risk Level -->
+    <div class="metric-card" id="mc-risk">
+      <div class="m-header"><span class="m-label">Risk Level</span><span class="m-icon">🛡️</span></div>
+      <div class="m-value-row"><span class="m-value" id="mv-risk" style="font-size:1.1rem;letter-spacing:0">--</span></div>
+      <div class="m-sub" id="ms-risk">ML inference engine</div>
+      <div class="m-bar" id="mb-risk" style="width:0%"></div>
+    </div>
+    <!-- Loss Rate -->
+    <div class="metric-card" id="mc-loss">
+      <div class="m-header"><span class="m-label">Loss Rate</span><span class="m-icon">📉</span></div>
+      <div class="m-value-row"><span class="m-value" id="mv-loss">--</span><span class="m-unit">%/day</span></div>
+      <div class="m-sub" id="ms-loss">Weight loss estimation</div>
+      <div class="m-bar" id="mb-loss" style="width:0%"></div>
+    </div>
+    <!-- Days Critical -->
+    <div class="metric-card" id="mc-crit">
+      <div class="m-header"><span class="m-label">Critical In</span><span class="m-icon">⏱️</span></div>
+      <div class="m-value-row"><span class="m-value" id="mv-crit">--</span><span class="m-unit">days</span></div>
+      <div class="m-sub" id="ms-crit">Days until crop loss</div>
+      <div class="m-bar" id="mb-crit" style="width:0%"></div>
+    </div>
+  </div>
+
+  <!-- EXHAUST FAN CONTROL & ACTION CENTER -->
+  <div class="section-header"><h2>Exhaust Fan Control & Action Center</h2></div>
+  <div class="metric-card" id="fan-control-center" style="display:flex; flex-direction:column; gap:12px; padding:16px;">
+    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+      <!-- Status Left -->
+      <div style="display:flex; align-items:center; gap:12px;">
+        <div style="width:40px; height:40px; border-radius:50%; background:var(--bg3); display:flex; align-items:center; justify-content:center; border:1px solid var(--border);" id="fan-icon-container">
+          <span style="font-size:1.4rem;" id="fan-icon">🌀</span>
+        </div>
+        <div>
+          <div style="font-size:0.85rem; font-weight:800;" id="fan-status-text">Exhaust Fan: OFF</div>
+          <div style="font-size:0.65rem; color:var(--text3); font-family:'JetBrains Mono',monospace;" id="fan-mode-text">Mode: AUTO (ML Controlled)</div>
+        </div>
+      </div>
+      
+      <!-- Control Buttons -->
+      <div style="display:flex; gap:6px;">
+        <button id="btn-fan-auto" onclick="setFanMode(0)" class="fan-btn active">AUTO</button>
+        <button id="btn-fan-on" onclick="setFanMode(1)" class="fan-btn">FORCE ON</button>
+        <button id="btn-fan-off" onclick="setFanMode(2)" class="fan-btn">FORCE OFF</button>
+      </div>
+    </div>
+    
+    <!-- Action Reason Banner -->
+    <div id="fan-action-msg" style="font-size:0.72rem; line-height:1.5; padding:10px 12px; border-radius:var(--radius-sm); font-family:'JetBrains Mono',monospace; background:var(--bg2); border:1px solid var(--border); color:var(--text2);">
+      Awaiting live data...
+    </div>
+  </div>
+
+  <!-- TABS -->
+  <div class="tabs-container">
+    <div class="tabs-row">
+      <button class="tab-btn active" onclick="setTab('live',this)" id="tab-btn-live">Live Charts</button>
+      <button class="tab-btn" onclick="setTab('action',this)">Actions</button>
+      <button class="tab-btn" onclick="setTab('predict',this)">ML Prediction</button>
+      <button class="tab-btn" onclick="setTab('oled',this)">OLED Mirror</button>
+      <button class="tab-btn" onclick="setTab('log',this)">Alert Log</button>
+    </div>
+
+    <!-- TAB: LIVE CHARTS -->
+    <div class="tab-content active" id="tab-live">
+      <div class="chart-legend">
+        <div class="legend-item"><div class="legend-dot" style="background:#ff6b35"></div>Temperature °C</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#40c4ff"></div>Humidity %RH</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#b388ff"></div>VPD ×100 Pa</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#69f0ae"></div>Dew Point °C</div>
+      </div>
+      <div class="chart-wrap"><canvas id="liveChart"></canvas></div>
+      <div style="margin-top:14px">
+        <div style="font-size:.65rem;color:var(--text4);font-family:'JetBrains Mono',monospace;margin-bottom:8px">30-DAY LOSS PROJECTION</div>
+        <div class="chart-wrap" style="height:140px"><canvas id="lossChart"></canvas></div>
+      </div>
+    </div>
+
+    <!-- TAB: ACTIONS -->
+    <div class="tab-content" id="tab-action">
+      <div class="action-grid" id="action-grid"></div>
+    </div>
+
+    <!-- TAB: PREDICT -->
+    <div class="tab-content" id="tab-predict">
+      <div id="pred-timeline" style="display:flex;flex-direction:column;gap:6px"></div>
+    </div>
+
+    <!-- TAB: OLED -->
+    <div class="tab-content" id="tab-oled">
+      <div style="text-align:center">
+        <div class="oled-wrap">
+          <div class="oled-screen">
+            <div class="oled-slide active" id="oled-0"></div>
+            <div class="oled-slide" id="oled-1"></div>
+            <div class="oled-slide" id="oled-2"></div>
+            <div class="oled-slide" id="oled-3"></div>
+          </div>
+        </div>
+        <div class="oled-dots">
+          <div class="oled-dot active" id="od0"></div>
+          <div class="oled-dot" id="od1"></div>
+          <div class="oled-dot" id="od2"></div>
+          <div class="oled-dot" id="od3"></div>
+        </div>
+        <div style="font-size:.6rem;color:var(--text4);font-family:'JetBrains Mono',monospace;margin-top:6px">Mirror of device OLED · 128×64 · 4s auto-scroll</div>
+      </div>
+    </div>
+
+    <!-- TAB: ALERT LOG -->
+    <div class="tab-content" id="tab-log">
+      <div class="alert-log" id="alert-log">
+        <div style="font-size:.62rem;color:var(--text4);font-family:'JetBrains Mono',monospace;text-align:center;padding:20px 0">No alerts recorded yet</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ RIGHT PANEL ═══ -->
+<div class="right-panel">
+  <!-- LED Status -->
+  <div class="rp-section">
+    <div class="rp-header">
+      <svg width="10" height="10" viewBox="0 0 10 10"><circle cx="5" cy="5" r="4" fill="none" stroke="var(--text4)" stroke-width="1"/></svg>
+      LED Status
+    </div>
+    <div class="leds-row">
+      <div class="led-wrap"><div class="led led-off" id="led-green"></div><div class="led-label">GREEN</div></div>
+      <div class="led-wrap"><div class="led led-off" id="led-blue"></div><div class="led-label">BLUE</div></div>
+      <div class="led-wrap"><div class="led led-off" id="led-yellow"></div><div class="led-label">YELLOW</div></div>
+      <div class="led-wrap"><div class="led led-off" id="led-red"></div><div class="led-label">RED</div></div>
+    </div>
+  </div>
+
+  <!-- Relay / Buzzer -->
+  <div class="rp-section">
+    <div class="relay-row">
+      <div class="relay-ind" id="ri-relay"><div class="ri-dot"></div><div class="ri-name">RELAY</div></div>
+      <div class="relay-ind" id="ri-buzz"><div class="ri-dot"></div><div class="ri-name">BUZZER</div></div>
+    </div>
+  </div>
+
+  <!-- BLE Raw -->
+  <div class="rp-section">
+    <div class="rp-header">
+      <svg width="10" height="10" viewBox="0 0 10 10"><rect x="1" y="1" width="8" height="8" rx="1" fill="none" stroke="var(--text4)" stroke-width="1"/></svg>
+      GATT Raw · 20 bytes
+    </div>
+    <div class="ble-payload" id="ble-payload">
+      <span style="color:var(--text4);font-size:.6rem">Waiting for notification…</span>
+    </div>
+  </div>
+
+  <!-- Connection Info -->
+  <div class="rp-section">
+    <div class="rp-header">
+      <svg width="10" height="10" viewBox="0 0 10 10"><path d="M3 3l4 4M7 3L3 7M5 1v8" stroke="var(--text4)" stroke-width="1" fill="none" stroke-linecap="round"/></svg>
+      Connection
+    </div>
+    <div style="font-size:.6rem;font-family:'JetBrains Mono',monospace;line-height:2.2;color:var(--text3)">
+      <div>SVC: <span style="color:var(--text4);font-size:.55rem">a1110000-…-9b34fb</span></div>
+      <div>CHR1: <span style="color:var(--text4);font-size:.55rem">a1110001 (Live)</span></div>
+      <div>CHR3: <span style="color:var(--text4);font-size:.55rem">a1110003 (Loss)</span></div>
+      <div>MODE: <span style="color:var(--green)">NOTIFY</span></div>
+      <div>SIZE: <span style="color:var(--blue)">20 bytes</span></div>
+      <div>INT: <span style="color:var(--blue)" id="notif-int">--ms</span></div>
+    </div>
+  </div>
+
+  <!-- System -->
+  <div class="rp-section">
+    <div class="rp-header">
+      <svg width="10" height="10" viewBox="0 0 10 10"><circle cx="5" cy="5" r="3" fill="none" stroke="var(--text4)" stroke-width="1"/><line x1="5" y1="1" x2="5" y2="2" stroke="var(--text4)" stroke-width="1"/><line x1="5" y1="8" x2="5" y2="9" stroke="var(--text4)" stroke-width="1"/></svg>
+      System
+    </div>
+    <div class="sys-row"><span class="sys-k">FW</span><span class="sys-v" id="si-fw">v2.4.1</span></div>
+    <div class="sys-row"><span class="sys-k">MCU</span><span class="sys-v">nRF52832</span></div>
+    <div class="sys-row"><span class="sys-k">SENSOR</span><span class="sys-v ok">SHT4x</span></div>
+    <div class="sys-row"><span class="sys-k">BLE</span><span class="sys-v ok">BT 4.2</span></div>
+    <div class="sys-row"><span class="sys-k">ML</span><span class="sys-v ok">4-Engine</span></div>
+    <div class="sys-row"><span class="sys-k">PACKETS</span><span class="sys-v" id="si-pkt">0</span></div>
+    <div class="sys-row"><span class="sys-k">UPTIME</span><span class="sys-v" id="si-uptime">0s</span></div>
+    <div class="sys-row"><span class="sys-k">LATENCY</span><span class="sys-v live" id="si-latency">--</span></div>
+  </div>
+</div>
+</div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script>
+// ══════════════════════════════════════════════════
+// ALLIUM GUARD — BLE GATT WEB DASHBOARD
+// Matches firmware: ble_service.c char_live_data (20 bytes)
+// ══════════════════════════════════════════════════
+
+// ── GATT UUIDs — MUST match firmware exactly ──
+const SVC_UUID   = 'a1110000-0000-1000-8000-00805f9b34fb';
+const CHAR1_UUID = 'a1110001-0000-1000-8000-00805f9b34fb'; // Live Data (Notify)
+const CHAR3_UUID = 'a1110003-0000-1000-8000-00805f9b34fb'; // Loss Tracker (Read+Notify)
+const CHAR4_UUID = 'a1110004-0000-1000-8000-00805f9b34fb'; // Config (Write)
+const DEVICE_NAME = 'AlliumGuard';
+
+// ── Crop Profiles (mirrors edge_ml.c thresholds) ──
+const CROPS = [
+  { name:'ONION', emoji:'🧅', label:'Onion Storage',
+    tOptMin:25, tOptMax:30, rhOptMin:65, rhOptMax:70,
+    rhRotWarn:75, rhRotCrit:80, tHeat:35, tSprout:15, tFrost:-2,
+    lossCrit:15, lossCoeff:0.10,
+    actions:[
+      {t:'Ventilation',   b:'Natural airflow adequate. Check vents every 6h.',           level:0},
+      {t:'Weekly Inspect', b:'Remove damaged stock. Check for soft spots.',               level:0},
+      {t:'Airflow Alert', b:'Increase fan speed. Open side vents immediately.',          level:1},
+      {t:'Sort & Cull',   b:'Remove pre-sprouting onions within 2h.',                   level:1},
+      {t:'Force Cool',    b:'Activate cooling. Target 20°C within 30min.',               level:2},
+      {t:'Emergency Cull',b:'Remove all soft units. Prevent cascade rot.',               level:2},
+      {t:'Emergency Vent',b:'!! All doors open. Dehumidifiers at max.',                  level:3},
+      {t:'Isolate Stock', b:'Separate affected pallets. Contact agronomist.',            level:3},
+    ]},
+  { name:'POTATO', emoji:'🥔', label:'Potato Storage',
+    tOptMin:4, tOptMax:8, rhOptMin:90, rhOptMax:95,
+    rhRotWarn:96, rhRotCrit:98, tHeat:25, tSprout:8, tFrost:2,
+    lossCrit:10, lossCoeff:0.05,
+    actions:[
+      {t:'Dark Store',    b:'Zero light maintained. No greening risk.',                  level:0},
+      {t:'CO₂ Monitor',   b:'CO₂ <2%. Adequate ventilation.',                           level:0},
+      {t:'Hum Reduction', b:'Increase ventilation. Target 85%RH / 1h.',                 level:1},
+      {t:'Rot Check',     b:'Physical inspection for soft spots.',                       level:1},
+      {t:'Emergency Cool',b:'Full refrigeration. Target 3°C / 45min.',                  level:2},
+      {t:'Blight Protocol',b:'Isolate pallets. Apply fungicide.',                        level:2},
+      {t:'Freeze Guard',  b:'Close all vents. Add insulation layers NOW.',               level:3},
+      {t:'Emergency Heat', b:'Activate heaters. Prevent frost damage.',                  level:3},
+    ]},
+  { name:'TOMATO', emoji:'🍅', label:'Tomato Storage',
+    tOptMin:12, tOptMax:15, rhOptMin:85, rhOptMax:90,
+    rhRotWarn:92, rhRotCrit:95, tHeat:30, tSprout:5, tFrost:5,
+    lossCrit:12, lossCoeff:0.12,
+    actions:[
+      {t:'Cold Chain',    b:'Cold storage nominal. Maintain 8–12°C.',                    level:0},
+      {t:'Ethylene Check',b:'Monitor ethylene <10ppm.',                                  level:0},
+      {t:'Seal Integrity',b:'Check crate lids. Prevent condensation.',                   level:1},
+      {t:'Hum Control',   b:'Activate dehumidifier. Target 85–88%RH.',                  level:1},
+      {t:'Dehumidify NOW',b:'Emergency dehumidifiers at max speed.',                     level:2},
+      {t:'Fungicide',     b:'Apply post-harvest fungicide within 1h.',                   level:2},
+      {t:'Chill Guard',   b:'Increase temp above 10°C immediately.',                     level:3},
+      {t:'Emergency Sort',b:'Remove all soft/leaking units NOW.',                        level:3},
+    ]}
+];
+
+const RISK_NAMES  = ['SAFE','WATCH','WARNING','CRITICAL'];
+const RISK_ICONS  = ['●','◉','▲','■'];
+const RISK_COLORS = ['var(--green)','var(--blue)','var(--amber)','var(--red)'];
+const BADGE_CLASS = ['badge-safe','badge-watch','badge-warning','badge-critical'];
+const CARD_CLASS  = ['','state-watch','state-warning','state-critical'];
+
+const CAUSE_NAMES = [
+  'No active threat',         // 0 NONE
+  'Rot Risk (High Humidity)', // 1 ROT
+  'Sprout Risk (Cold+Humid)', // 2 SPROUT
+  'Heat Stress (High Temp)',  // 3 HEAT
+  'Condensation (Dew Risk)',  // 4 CONDENSATION
+  'High Weight Loss',         // 5 WEIGHT_LOSS
+  'Frost Damage (Low Temp)',  // 6 FROST
+  'Blight Risk (Humid+Warm)'  // 7 BLIGHT
+];
+
+// ── State ──
+let cropIdx = 0;
+let tempVal = 0, humVal = 0, vpdVal = 0, dewVal = 0, ahVal = 0;
+let riskLevel = 0, causeId = 0, relayState = 0;
+let lossRate = 0, loss30d = 0, daysCrit = 0;
+
+const HIST_SIZE = 120;
+let tempHistory = Array(HIST_SIZE).fill(null);
+let humHistory  = Array(HIST_SIZE).fill(null);
+let vpdHistory  = Array(HIST_SIZE).fill(null);
+let dewHistory  = Array(HIST_SIZE).fill(null);
+let lossHistory = [];
+
+let chart = null, lossChart = null;
+let oledSlide = 0;
+let bleDevice = null, bleServer = null, bleChar1 = null, bleChar3 = null, bleChar4 = null;
+let pktCount = 0, startTime = Date.now();
+let lastNotifTime = 0, avgLatency = 0;
+let fanOverrideMode = 0; // 0 = AUTO, 1 = FORCE ON, 2 = FORCE OFF
+
+let alertLog = [];
+
+// ══════════════════════════════════════════════════
+// BLE — GATT CONNECT (REAL FIRMWARE UUIDs)
+// ══════════════════════════════════════════════════
+function setStatus(msg, isError) {
+  const el = document.getElementById('connect-status');
+  el.textContent = msg;
+  el.className = isError ? 'error' : '';
+}
+
+async function connectBLE() {
+  if (!navigator.bluetooth) {
+    setStatus('❌ Web Bluetooth not supported. Use Chrome or Edge.', true);
+    return;
+  }
+  const btn = document.getElementById('connect-btn');
+  btn.disabled = true;
+  setStatus('Opening Bluetooth picker…');
+
+  try {
+    bleDevice = await navigator.bluetooth.requestDevice({
+      filters: [{ name: DEVICE_NAME }],
+      optionalServices: [SVC_UUID]
+    });
+
+    setStatus('Connecting to GATT server…');
+    bleDevice.addEventListener('gattserverdisconnected', onDisconnected);
+
+    bleServer = await bleDevice.gatt.connect();
+    setStatus('Discovering AlliumGuard service…');
+
+    const service = await bleServer.getPrimaryService(SVC_UUID);
+    setStatus('Getting characteristics…');
+
+    // CHAR1: Live Data (20 bytes, Notify)
+    bleChar1 = await service.getCharacteristic(CHAR1_UUID);
+    await bleChar1.startNotifications();
+    bleChar1.addEventListener('characteristicvaluechanged', onLiveNotify);
+
+    // CHAR3: Loss Tracker (8 bytes, Read+Notify) — try to subscribe
+    try {
+      bleChar3 = await service.getCharacteristic(CHAR3_UUID);
+      await bleChar3.startNotifications();
+      bleChar3.addEventListener('characteristicvaluechanged', onLossNotify);
+    } catch(e) {
+      console.warn('CHAR3 notify not available, will derive from CHAR1:', e.message);
+    }
+
+    // CHAR4: Config Write
+    try {
+      bleChar4 = await service.getCharacteristic(CHAR4_UUID);
+    } catch(e) {
+      console.warn('CHAR4 config write not available:', e.message);
+    }
+
+    // Initial read
+    try {
+      const val = await bleChar1.readValue();
+      parseLiveData(val);
+    } catch(e) {
+      console.warn('Initial read skipped (notify-only):', e.message);
+    }
+
+    onConnected();
+  } catch(err) {
+    btn.disabled = false;
+    if (err.name === 'NotFoundError' || err.message.includes('cancelled')) {
+      setStatus('Scan cancelled. Tap to try again.');
+    } else if (err.message.includes('GATT')) {
+      setStatus('GATT error: ' + err.message, true);
+    } else {
+      setStatus('Error: ' + err.message, true);
+    }
+    console.error(err);
+  }
+}
+
+function onConnected() {
+  document.getElementById('connect-screen').style.display = 'none';
+  document.getElementById('dashboard').style.display = 'flex';
+  document.getElementById('ble-dot').className = 'dot-live';
+  document.getElementById('ble-txt').textContent = 'CONNECTED';
+  startTime = Date.now();
+  pktCount = 0;
+}
+
+async function onDisconnected() {
+  document.getElementById('ble-dot').classList.add('dot-disc');
+  document.getElementById('ble-txt').textContent = 'RECONNECTING…';
+  addAlertLog(2, 'BLE disconnected — attempting auto-reconnect');
+
+  while (bleDevice && !bleDevice.gatt.connected) {
+    try {
+      bleServer = await bleDevice.gatt.connect();
+      const svc = await bleServer.getPrimaryService(SVC_UUID);
+      bleChar1 = await svc.getCharacteristic(CHAR1_UUID);
+      await bleChar1.startNotifications();
+      bleChar1.addEventListener('characteristicvaluechanged', onLiveNotify);
+      try {
+        bleChar3 = await svc.getCharacteristic(CHAR3_UUID);
+        await bleChar3.startNotifications();
+        bleChar3.addEventListener('characteristicvaluechanged', onLossNotify);
+      } catch(e) {}
+      try {
+        bleChar4 = await svc.getCharacteristic(CHAR4_UUID);
+      } catch(e) {}
+      document.getElementById('ble-dot').classList.remove('dot-disc');
+      document.getElementById('ble-txt').textContent = 'CONNECTED';
+      addAlertLog(0, 'BLE reconnected successfully');
+      break;
+    } catch(e) {
+      await new Promise(r => setTimeout(r, 2000));
+    }
+  }
+}
+
+function disconnectBLE() {
+  if (bleDevice && bleDevice.gatt.connected) bleDevice.gatt.disconnect();
+  bleDevice = null; bleServer = null; bleChar1 = null; bleChar3 = null;
+  document.getElementById('connect-screen').style.display = 'flex';
+  document.getElementById('dashboard').style.display = 'none';
+  document.getElementById('connect-btn').disabled = false;
+  setStatus('Disconnected. Tap to reconnect.');
+}
+
+// ══════════════════════════════════════════════════
+// GATT NOTIFY HANDLERS
+// ══════════════════════════════════════════════════
+// CHAR1: char_live_data (20 bytes, little-endian packed)
+// ┌─────────────────────────────────────────────────┐
+// │ Offset │ Type   │ Field             │ Scale     │
+// │   0    │ int16  │ temp_dc           │ ÷10 = °C  │
+// │   2    │ uint16 │ rh_dc             │ ÷10 = %   │
+// │   4    │ int16  │ vpd_dPa           │ ÷10 = Pa  │
+// │   6    │ int16  │ dew_dc            │ ÷10 = °C  │
+// │   8    │ uint16 │ ah_dg             │ ÷10 = g/m³│
+// │  10    │ uint8  │ risk_level        │ 0-3       │
+// │  11    │ uint8  │ cause_id          │ 0-7       │
+// │  12    │ uint8  │ relay_state       │ 0/1       │
+// │  13    │ uint8  │ loss_rate_x10     │ ÷10 %/day │
+// │  14    │ uint16 │ est_loss_30d_x10  │ ÷10 %     │
+// │  16    │ uint16 │ days_critical_x10 │ ÷10 days  │
+// │  18    │ uint8  │ crop_mode         │ 0=🧅 1=🥔 2=🍅│
+// │  19    │ uint8  │ reserved_pad      │           │
+// └─────────────────────────────────────────────────┘
+
+function onLiveNotify(event) {
+  parseLiveData(event.target.value);
+}
+
+function parseLiveData(dv) {
+  if (dv.byteLength < 18) return;
+
+  const now = Date.now();
+  const interval = lastNotifTime ? (now - lastNotifTime) : 0;
+  lastNotifTime = now;
+  if (interval > 0) {
+    avgLatency = avgLatency ? avgLatency * 0.8 + interval * 0.2 : interval;
+    document.getElementById('notif-int').textContent = Math.round(avgLatency) + 'ms';
+    document.getElementById('si-latency').textContent = Math.round(avgLatency) + 'ms';
+  }
+
+  // Parse all fields (Little Endian)
+  const temp_dc          = dv.getInt16(0, true);
+  const rh_dc            = dv.getUint16(2, true);
+  const vpd_dPa          = dv.getInt16(4, true);
+  const dew_dc           = dv.getInt16(6, true);
+  const ah_dg            = dv.getUint16(8, true);
+  const risk             = dv.getUint8(10);
+  const cause            = dv.getUint8(11);
+  const relay            = dv.getUint8(12);
+  const loss_x10         = dv.getUint8(13);
+  const loss30d_x10      = dv.getUint16(14, true);
+  const daysCrit_x10     = dv.getUint16(16, true);
+  // crop_mode: byte 18. Guard: packet must be 20 bytes (exact struct size).
+  // Firmware sends exactly sizeof(char_live_data) = 20 bytes every notify.
+  const cropMode = dv.byteLength >= 19 ? dv.getUint8(18) : 0;
+
+  // Scale to real values
+  tempVal    = temp_dc / 10.0;
+  humVal     = rh_dc / 10.0;
+  vpdVal     = vpd_dPa / 10.0;     // Pa
+  dewVal     = dew_dc / 10.0;
+  ahVal      = ah_dg / 10.0;
+  riskLevel  = Math.min(risk, 3);
+  causeId    = Math.min(cause, 7);
+  relayState = relay;
+  lossRate   = loss_x10 / 10.0;
+  loss30d    = loss30d_x10 / 10.0;
+  daysCrit   = daysCrit_x10 / 10.0;
+  cropIdx    = Math.min(cropMode, 2);
+
+  pktCount++;
+
+  // Push to history
+  tempHistory.push(parseFloat(tempVal.toFixed(1)));
+  humHistory.push(parseFloat(humVal.toFixed(1)));
+  vpdHistory.push(parseFloat((vpdVal / 100).toFixed(2))); // store as hPa for chart scale
+  dewHistory.push(parseFloat(dewVal.toFixed(1)));
+  if (tempHistory.length > HIST_SIZE) { tempHistory.shift(); humHistory.shift(); vpdHistory.shift(); dewHistory.shift(); }
+
+  // Loss history for projection chart
+  lossHistory.push({ t: now, rate: lossRate, est30d: loss30d });
+  if (lossHistory.length > 60) lossHistory.shift();
+
+  // Detect crop from data context (firmware sets crop in OLED, dashboard follows risk levels)
+  // Crop switching is display-only on dashboard; firmware decides the crop
+  // We infer from thresholds if temp/hum patterns match
+
+  // Alert log on state change
+  if (pktCount > 1) {
+    trackAlertChanges(riskLevel, causeId);
+  }
+
+  // Update BLE raw display
+  updateBLEPayload(dv);
+
+  // Update system info
+  document.getElementById('si-pkt').textContent = pktCount;
+
+  render();
+  updateChart();
+  updateLossChart();
+}
+
+// CHAR3: char_loss_tracker (8 bytes)
+function onLossNotify(event) {
+  const dv = event.target.value;
+  if (dv.byteLength < 8) return;
+  // float cumulative_loss_pct (4 bytes) + uint16 days_monitored (2 bytes) + reserved (2 bytes)
+  // We already get loss data from CHAR1, this is supplementary
+}
+
+// ── Manual Override ──
+// ── Fan Override Mode ──
+function updateFanUI() {
+  const btnAuto = document.getElementById('btn-fan-auto');
+  const btnOn = document.getElementById('btn-fan-on');
+  const btnOff = document.getElementById('btn-fan-off');
+  
+  if (btnAuto) btnAuto.classList.toggle('active', fanOverrideMode === 0);
+  if (btnOn) btnOn.classList.toggle('active', fanOverrideMode === 1);
+  if (btnOff) btnOff.classList.toggle('active', fanOverrideMode === 2);
+  
+  const modeText = fanOverrideMode === 0 ? 'AUTO (ML Controlled)' : 
+                   fanOverrideMode === 1 ? 'MANUAL FORCE ON' : 'MANUAL FORCE OFF';
+  const lblMode = document.getElementById('fan-mode-text');
+  if (lblMode) lblMode.textContent = 'Mode: ' + modeText;
+
+  const isFanOn = relayState === 1;
+  const fanIcon = document.getElementById('fan-icon');
+  const fanIconContainer = document.getElementById('fan-icon-container');
+  const fanStatusText = document.getElementById('fan-status-text');
+
+  if (fanIcon) {
+    if (isFanOn) {
+      fanIcon.classList.add('fan-spin');
+      if (fanStatusText) fanStatusText.textContent = 'Exhaust Fan: ON';
+      if (fanIconContainer) {
+        fanIconContainer.style.borderColor = 'var(--green)';
+        fanIconContainer.style.boxShadow = 'var(--glow-green)';
+      }
+    } else {
+      fanIcon.classList.remove('fan-spin');
+      if (fanStatusText) fanStatusText.textContent = 'Exhaust Fan: OFF';
+      if (fanIconContainer) {
+        fanIconContainer.style.borderColor = 'var(--border)';
+        fanIconContainer.style.boxShadow = 'none';
+      }
+    }
+  }
+
+  const msgEl = document.getElementById('fan-action-msg');
+  if (msgEl) {
+    if (fanOverrideMode === 1) {
+      msgEl.textContent = 'The exhaust fan is manually forced ON. Normal ML safety automation is suspended.';
+      msgEl.style.borderColor = 'var(--amber-border)';
+      msgEl.style.background = 'var(--amber-bg)';
+      msgEl.style.color = 'var(--amber)';
+    } else if (fanOverrideMode === 2) {
+      msgEl.textContent = 'The exhaust fan is manually forced OFF. Normal ML safety automation is suspended.';
+      msgEl.style.borderColor = 'var(--red-border)';
+      msgEl.style.background = 'var(--red-bg)';
+      msgEl.style.color = 'var(--red)';
+    } else {
+      msgEl.style.borderColor = 'var(--border)';
+      msgEl.style.background = 'var(--bg2)';
+      msgEl.style.color = 'var(--text2)';
+      
+      if (riskLevel === 0) {
+        msgEl.textContent = 'Storage environment is optimal. Exhaust fan remains OFF to conserve energy and keep storage isolated.';
+      } else if (riskLevel === 1) {
+        msgEl.textContent = 'Minor climate drift: ' + CAUSE_NAMES[causeId] + '. Monitoring closely. Exhaust fan remains OFF.';
+      } else {
+        const causeClean = CAUSE_NAMES[causeId].split('(')[0].trim();
+        if (isFanOn) {
+          msgEl.textContent = '⚠️ ' + RISK_NAMES[riskLevel] + ' Alert (' + causeClean + '): To dry/cool the produce, the ML engine has automatically turned the exhaust fan ON.';
+          msgEl.style.borderColor = 'var(--green-border)';
+          msgEl.style.background = 'var(--green-bg)';
+          msgEl.style.color = 'var(--green)';
+        } else {
+          msgEl.textContent = '⚠️ ' + RISK_NAMES[riskLevel] + ' Alert (' + causeClean + '): To protect storage from chilling or moisture loss, the ML engine has kept the exhaust fan OFF.';
+        }
+      }
+    }
+  }
+}
+
+async function setFanMode(mode) {
+  if (!bleChar4) {
+    alert('Config connection not established or not supported by firmware.');
+    return;
+  }
+  
+  // struct char_config: uint16 sense_interval (2), uint8 relay (1), uint8 alert_mask (1), uint8 reserved[4]
+  const buffer = new ArrayBuffer(8);
+  const dv = new DataView(buffer);
+  dv.setUint16(0, 0, true); // Send 0 to bypass interval change & GATT verification limits
+  dv.setUint8(2, mode); // 0 = Auto, 1 = Force ON, 2 = Force OFF
+  dv.setUint8(3, 0xFF);
+  
+  try {
+    await bleChar4.writeValue(buffer);
+    fanOverrideMode = mode;
+    
+    let logMsg = '';
+    if (mode === 0) logMsg = 'Relay returned to AUTO logic via Dashboard';
+    else if (mode === 1) logMsg = 'Relay manually forced ON via Dashboard';
+    else if (mode === 2) logMsg = 'Relay manually forced OFF via Dashboard';
+    addAlertLog(0, logMsg);
+    
+    updateFanUI();
+  } catch(e) {
+    console.error('BLE Write Error:', e);
+    alert('Failed to send command to device: ' + e.message);
+  }
+}
+
+// ── Alert Tracking ──
+let prevRisk = -1, prevCause = -1;
+function trackAlertChanges(risk, cause) {
+  if (prevRisk === -1 && prevCause === -1) {
+    prevRisk = risk;
+    prevCause = cause;
+    return; // Skip initial state logging to avoid clutter
+  }
+  if (risk !== prevRisk || cause !== prevCause) {
+    let msg = RISK_NAMES[risk];
+    if (cause > 0) msg += ' — ' + CAUSE_NAMES[cause];
+    else if (risk === 0 && prevRisk > 0) msg = 'Returned to SAFE conditions';
+    
+    addAlertLog(risk, msg);
+    prevRisk = risk;
+    prevCause = cause;
+  }
+}
+
+function addAlertLog(level, msg) {
+  const now = new Date();
+  const ts = now.getHours().toString().padStart(2,'0') + ':' +
+             now.getMinutes().toString().padStart(2,'0') + ':' +
+             now.getSeconds().toString().padStart(2,'0');
+  alertLog.unshift({ level, msg, ts });
+  if (alertLog.length > 50) alertLog.pop();
+  renderAlertLog();
+}
+
+function renderAlertLog() {
+  const el = document.getElementById('alert-log');
+  if (alertLog.length === 0) {
+    el.innerHTML = '<div style="font-size:.62rem;color:var(--text4);font-family:\'JetBrains Mono\',monospace;text-align:center;padding:20px 0">No alerts recorded yet</div>';
+    return;
+  }
+  el.innerHTML = alertLog.map(a => {
+    const col = [RISK_COLORS[0], RISK_COLORS[1], RISK_COLORS[2], RISK_COLORS[3]][Math.min(a.level, 3)];
+    return `<div class="alert-log-entry"><div class="log-dot" style="background:${col};box-shadow:0 0 4px ${col}"></div><span class="log-time">${a.ts}</span><span class="log-msg">${a.msg}</span></div>`;
+  }).join('');
+}
+
+// ══════════════════════════════════════════════════
+// RENDER ALL UI
+// ══════════════════════════════════════════════════
+function render() {
+  const c = CROPS[cropIdx];
+
+  // Crop pills
+  [0,1,2].forEach(i => document.getElementById('cp-'+i).classList.toggle('active', i === cropIdx));
+
+  // Title & status badge
+  document.getElementById('crop-title').textContent = c.emoji + ' ' + c.label.toUpperCase();
+  const badge = document.getElementById('status-badge');
+  badge.className = 'status-badge ' + BADGE_CLASS[riskLevel];
+  badge.textContent = RISK_ICONS[riskLevel] + ' ' + RISK_NAMES[riskLevel];
+
+  // Cause
+  document.getElementById('cause-display').textContent = CAUSE_NAMES[causeId];
+
+  // Alert banner
+  const banner = document.getElementById('alert-banner');
+  banner.className = 'alert-banner';
+  let relayActionText = relayState ? '  [ACTION TAKEN: Exhaust Fan / Relay turned ON automatically]' : '  [Relay: OFF]';
+  if (riskLevel >= 3) {
+    banner.classList.add('critical');
+    document.getElementById('alert-icon').textContent = '🚨';
+    document.getElementById('alert-msg').textContent = 'CRITICAL — ' + CAUSE_NAMES[causeId] + ' — Immediate action required!' + relayActionText;
+  } else if (riskLevel >= 2) {
+    banner.classList.add('warning');
+    document.getElementById('alert-icon').textContent = '⚠️';
+    document.getElementById('alert-msg').textContent = 'WARNING — ' + CAUSE_NAMES[causeId] + relayActionText;
+  } else if (riskLevel >= 1) {
+    banner.classList.add('watch');
+    document.getElementById('alert-icon').textContent = '👁️';
+    document.getElementById('alert-msg').textContent = 'WATCH — ' + CAUSE_NAMES[causeId] + relayActionText;
+  }
+
+  // ── Metric Cards ──
+  const vpdKpa = vpdVal / 1000;
+  const dewMargin = tempVal - dewVal;
+
+  // Temperature
+  const tPct = Math.min(100, Math.max(0, (tempVal / (c.tOptMax * 1.5)) * 100));
+  document.getElementById('mv-temp').textContent = tempVal.toFixed(1);
+  document.getElementById('ms-temp').textContent = 'Optimal: ' + c.tOptMin + '–' + c.tOptMax + '°C';
+  setBar('mb-temp', tPct, riskLevel);
+  setCardState('mc-temp', tempVal < c.tOptMin || tempVal > c.tOptMax ? Math.max(1, riskLevel) : 0);
+
+  // Humidity
+  const hPct = Math.min(100, Math.max(0, (humVal / 100) * 100));
+  document.getElementById('mv-hum').textContent = humVal.toFixed(1);
+  document.getElementById('ms-hum').textContent = 'Optimal: ' + c.rhOptMin + '–' + c.rhOptMax + '%';
+  setBar('mb-hum', hPct, riskLevel);
+  setCardState('mc-hum', humVal < c.rhOptMin || humVal > c.rhOptMax ? Math.max(1, riskLevel) : 0);
+
+  // VPD
+  document.getElementById('mv-vpd').textContent = vpdKpa.toFixed(2);
+  document.getElementById('ms-vpd').textContent = vpdVal.toFixed(0) + ' Pa | Loss coeff: ' + c.lossCoeff;
+  setBar('mb-vpd', Math.min(100, vpdKpa * 50), 0);
+
+  // Dew Point
+  document.getElementById('mv-dew').textContent = dewVal.toFixed(1);
+  document.getElementById('ms-dew').textContent = 'Margin: ' + dewMargin.toFixed(1) + '°C' + (dewMargin < 3 ? ' ⚠ CLOSE' : ' ✓');
+  setBar('mb-dew', Math.min(100, (dewVal + 10) / 50 * 100), dewMargin < 3 ? 3 : 0);
+  setCardState('mc-dew', dewMargin < 3 ? Math.max(2, riskLevel) : 0);
+
+  // Absolute Humidity
+  document.getElementById('mv-ah').textContent = ahVal.toFixed(1);
+  document.getElementById('ms-ah').textContent = 'Moisture content in air';
+  setBar('mb-ah', Math.min(100, ahVal / 30 * 100), 0);
+
+  // Risk Level
+  document.getElementById('mv-risk').textContent = RISK_NAMES[riskLevel];
+  document.getElementById('mv-risk').style.color = RISK_COLORS[riskLevel];
+  document.getElementById('ms-risk').textContent = CAUSE_NAMES[causeId];
+  setBar('mb-risk', [25, 50, 75, 100][riskLevel], riskLevel);
+  setCardState('mc-risk', riskLevel);
+
+  // Loss Rate
+  document.getElementById('mv-loss').textContent = lossRate.toFixed(2);
+  document.getElementById('ms-loss').textContent = '30d est: ' + loss30d.toFixed(1) + '% | Crit: ' + c.lossCrit + '%';
+  setBar('mb-loss', Math.min(100, (loss30d / c.lossCrit) * 100), loss30d > c.lossCrit * 0.7 ? 2 : loss30d > c.lossCrit * 0.4 ? 1 : 0);
+
+  // Days Critical
+  const critDisplay = daysCrit >= 6000 ? '>600' : daysCrit.toFixed(0);
+  document.getElementById('mv-crit').textContent = critDisplay;
+  document.getElementById('ms-crit').textContent = daysCrit < 7 ? '⚠ URGENT' : daysCrit < 30 ? 'Monitor closely' : 'Long runway';
+  const critPct = daysCrit >= 6000 ? 5 : Math.min(100, Math.max(5, 100 - (daysCrit / 180 * 100)));
+  setBar('mb-crit', critPct, daysCrit < 7 ? 3 : daysCrit < 30 ? 2 : daysCrit < 90 ? 1 : 0);
+  setCardState('mc-crit', daysCrit < 7 ? 3 : daysCrit < 30 ? 2 : 0);
+
+  // ── LEDs ──
+  document.getElementById('led-green').className  = 'led ' + (riskLevel === 0 ? 'led-green' : 'led-off');
+  document.getElementById('led-blue').className   = 'led ' + (riskLevel === 1 ? 'led-blue' : 'led-off');
+  document.getElementById('led-yellow').className = 'led ' + (riskLevel === 2 ? 'led-yellow' : 'led-off');
+  document.getElementById('led-red').className    = 'led ' + (riskLevel === 3 ? 'led-red' : 'led-off');
+
+  // ── Relay / Buzzer ──
+  document.getElementById('ri-relay').className = 'relay-ind' + (relayState ? ' on-relay' : '');
+  document.getElementById('ri-buzz').className  = 'relay-ind' + (riskLevel >= 3 ? ' on-buzzer' : '');
+
+  // ── Uptime ──
+  const secs = Math.floor((Date.now() - startTime) / 1000);
+  const mins = Math.floor(secs / 60);
+  const hrs  = Math.floor(mins / 60);
+  document.getElementById('si-uptime').textContent = hrs > 0 ? hrs + 'h ' + (mins % 60) + 'm' : mins > 0 ? mins + 'm ' + (secs % 60) + 's' : secs + 's';
+
+  updateActions(c);
+  updatePrediction(c);
+  updateOLED(c);
+  updateFanUI();
+}
+
+function setBar(id, pct, level) {
+  const cols = ['var(--green2)','var(--blue)','var(--amber)','var(--red)'];
+  document.getElementById(id).style.cssText = 'width:' + pct + '%;background:' + cols[level];
+}
+
+function setCardState(id, level) {
+  document.getElementById(id).className = 'metric-card' + (CARD_CLASS[level] ? ' ' + CARD_CLASS[level] : '');
+}
+
+// ── BLE Payload Display ──
+function updateBLEPayload(dv) {
+  const fields = [
+    { off:0, len:2, k:'TEMP', col:'var(--green)' },
+    { off:2, len:2, k:'RH',   col:'var(--blue)' },
+    { off:4, len:2, k:'VPD',  col:'var(--purple)' },
+    { off:6, len:2, k:'DEW',  col:'var(--cyan)' },
+    { off:8, len:2, k:'AH',   col:'var(--blue3)' },
+    { off:10,len:1, k:'RISK', col:'var(--red)' },
+    { off:11,len:1, k:'CAUSE',col:'var(--amber)' },
+    { off:12,len:1, k:'RELAY',col:'var(--amber)' },
+    { off:13,len:1, k:'LOSS', col:'var(--green)' },
+    { off:14,len:2, k:'L30D', col:'var(--purple)' },
+    { off:16,len:2, k:'DCRIT',col:'var(--red3)' },
+    { off:18,len:1, k:'CROP', col:'var(--green)' },
+    { off:19,len:1, k:'PAD',  col:'var(--text4)' },
+  ];
+  let html = '';
+  for (const f of fields) {
+    let hex = '';
+    for (let i = 0; i < f.len; i++) {
+      if (f.off + i < dv.byteLength) {
+        hex += dv.getUint8(f.off + i).toString(16).toUpperCase().padStart(2, '0');
+      }
+    }
+    html += `<div class="ble-byte"><span class="ble-val" style="color:${f.col}">0x${hex}</span><span class="ble-key">${f.k}</span></div>`;
+  }
+  document.getElementById('ble-payload').innerHTML = html;
+}
+
+// ── Actions ──
+function updateActions(c) {
+  const grid = document.getElementById('action-grid');
+  grid.innerHTML = c.actions.map(a => {
+    let cls = 'action-card';
+    if (a.level <= riskLevel && riskLevel >= 3) cls += ' active-critical';
+    else if (a.level <= riskLevel && riskLevel >= 2) cls += ' active-warning';
+    else if (a.level <= riskLevel && riskLevel >= 1) cls += ' active-watch';
+    return `<div class="${cls}"><div class="a-title">${a.t}</div><div class="a-body">${a.b}</div></div>`;
+  }).join('');
+}
+
+// ── ML Prediction Timeline ──
+function updatePrediction(c) {
+  const cols = ['var(--green2)', 'var(--blue)', 'var(--amber)', 'var(--red)'];
+  
+  // Map risk level to threat probability percentage
+  const pctValues = [5, 35, 75, 98];
+  const pctValue = pctValues[riskLevel];
+  
+  // Calculate probability/confidence text
+  let prob = "Low (< 10%)";
+  if (riskLevel === 1) prob = "Moderate (~ 35%)";
+  if (riskLevel === 2) prob = "High (~ 75%)";
+  if (riskLevel === 3) prob = "Certain (> 95%)";
+  
+  // Layman friendly diagnostic descriptions for each cause
+  const CAUSE_DIAGNOSTICS = {
+    0: "The storage environment is fully optimal. The current temperature and relative humidity are within the recommended limits for the selected crop profile, preventing physical weight loss, sprouting, fungal spore germination, and bulb rotting. Keep ventilation doors in standard operational states.",
+    1: "Rot risk occurs when humidity levels exceed the crop's threshold for prolonged periods. The high relative humidity (optimal is " + c.rhOptMin + "-" + c.rhOptMax + "%) provides a damp environment where fungal neck rot and bacterial soft rot pathogens germinate and rapidly digest bulb cells. The exhaust fan is activated to reduce relative humidity.",
+    2: "Sprout risk is triggered by a combination of cold and humid conditions. This climate mimics natural spring planting cycles, signaling the bulbs to break dormancy, restart cellular division, and send green shoots through the neck. Sprouting degrades bulb texture and makes them unmarketable. Storage must be kept warmer and ventilated.",
+    3: "Heat stress occurs when the storage temperature exceeds the recommended safety range (optimal: " + c.tOptMin + "-" + c.tOptMax + "°C). High temperatures accelerate respiration rates inside the crops, consuming stored sugars, causing rapid cell breakdown, and speeding up dehydration and weight loss. Cooling and nocturnal venting are required.",
+    4: "Condensation (dew risk) is caused when the air temperature falls near or below the dew point, causing water vapor to condense into liquid droplets on the crop surfaces. Free standing moisture on onion necks provides an immediate pathway for fungal spore entry and rapid soft rot infection. Increase airflow to dry the crop surfaces immediately.",
+    5: "High physiological weight loss occurs when the air is too dry, corresponding to a high Vapor Pressure Deficit (VPD). The dry air draws moisture out of the bulb cells through transpiration, causing tissue shrinkage, skin wrinkling, and loss of total marketable weight. Reduce excessive ventilation and monitor moisture closely.",
+    6: "Frost damage is caused by sub-zero temperatures (below 0°C). Water inside the bulb cells freezes and crystallizes into ice needles, which puncture cell walls. When thawing occurs, the cell structures collapse, making the bulbs mushy, translucent, and highly susceptible to secondary rot pathogens. Insulate storage immediately.",
+    7: "Blight risk is triggered by a combination of warm temperatures and high humidity. These conditions are highly favorable for fungal pathogens (like leaf blight and mildew) to germinate spores, build mycelial networks, and spread rapidly through stored stock. Ventilate immediately to dry the air."
+  };
+
+  const diagnosticText = CAUSE_DIAGNOSTICS[causeId] || CAUSE_DIAGNOSTICS[0];
+
+  let explanation = `<div class="ml-result-card" style="background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:16px; margin-bottom:16px;">
+    <!-- Header Row: Prediction Name & Confidence Circle -->
+    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:16px; margin-bottom:16px;">
+      <!-- Left Info -->
+      <div style="display:flex; flex-direction:column; gap:4px;">
+        <div style="font-size:0.6rem; color:var(--text3); font-family:'JetBrains Mono', monospace; text-transform:uppercase; letter-spacing:1px;">ML Model Prediction Result</div>
+        <div style="font-size:1.4rem; font-weight:900; color:${cols[riskLevel]}">${RISK_NAMES[riskLevel]}</div>
+        <div style="font-size:0.75rem; color:var(--text2); font-weight:600;">${CAUSE_NAMES[causeId]}</div>
+      </div>
+      
+      <!-- Right Circular SVG Gauge -->
+      <div style="display:flex; align-items:center; gap:8px;">
+        <div style="text-align:right;">
+          <div style="font-size:0.6rem; color:var(--text3); font-family:'JetBrains Mono', monospace; text-transform:uppercase;">Threat Probability</div>
+          <div style="font-size:0.8rem; font-weight:700; color:var(--text2);">${prob}</div>
+        </div>
+        <svg width="60" height="60" viewBox="0 0 36 36" style="transform: rotate(-90deg);">
+          <path stroke="var(--bg3)" stroke-width="3" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+          <path stroke="${cols[riskLevel]}" stroke-width="3" stroke-dasharray="${pctValue}, 100" stroke-linecap="round" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+          <text x="18" y="20.3" font-family="'JetBrains Mono', monospace" font-size="8" font-weight="700" fill="var(--text)" text-anchor="middle" style="transform: rotate(90deg); transform-origin: 18px 18px;">${pctValue}%</text>
+        </svg>
+      </div>
+    </div>
+    
+    <!-- Diagnostic Breakdown -->
+    <div style="background:var(--bg2); border:1px solid var(--border); border-radius:var(--radius-sm); padding:12px; margin-bottom:12px;">
+      <div style="font-size:0.75rem; font-weight:800; color:var(--text); margin-bottom:6px; display:flex; align-items:center; gap:6px;">
+        <span>🔍</span> Why did this happen?
+      </div>
+      <div style="font-size:0.7rem; color:var(--text2); line-height:1.6;" id="pred-diagnostic-desc">
+        ${diagnosticText}
+      </div>
+    </div>
+
+    <!-- Environmental Factors context -->
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; font-size:0.65rem;">
+      <div style="background:var(--bg3); border-radius:var(--radius-xs); padding:8px; border:1px solid var(--border); display:flex; flex-direction:column; justify-content:center;">
+        <span style="color:var(--text3);">Target Temp:</span> <strong style="color:var(--text); font-family:'JetBrains Mono', monospace;">${c.tOptMin}-${c.tOptMax}°C</strong>
+        <span style="color:var(--text3); margin-top:2px;">Current Temp:</span> <strong style="color:${tempVal < c.tOptMin || tempVal > c.tOptMax ? 'var(--amber)' : 'var(--green)'}; font-family:'JetBrains Mono', monospace;">${tempVal.toFixed(1)}°C</strong>
+      </div>
+      <div style="background:var(--bg3); border-radius:var(--radius-xs); padding:8px; border:1px solid var(--border); display:flex; flex-direction:column; justify-content:center;">
+        <span style="color:var(--text3);">Target Hum:</span> <strong style="color:var(--text); font-family:'JetBrains Mono', monospace;">${c.rhOptMin}-${c.rhOptMax}%</strong>
+        <span style="color:var(--text3); margin-top:2px;">Current Hum:</span> <strong style="color:${humVal < c.rhOptMin || humVal > c.rhOptMax ? 'var(--amber)' : 'var(--green)'}; font-family:'JetBrains Mono', monospace;">${humVal.toFixed(1)}%</strong>
+      </div>
+    </div>
+  </div>
+  
+  <div style="font-size:.65rem;font-weight:700;letter-spacing:1px;color:var(--text3);text-transform:uppercase;margin-bottom:8px;display:flex;align-items:center;gap:8px">6-Hour Environment Drift Forecast<span style="flex:1;height:1px;background:var(--border)"></span></div>`;
+
+  document.getElementById('pred-timeline').innerHTML = explanation + Array.from({length:6}, (_, i) => {
+    const hr = i + 1;
+    const drift = riskLevel >= 3 ? 0.5 : riskLevel >= 2 ? 0.2 : riskLevel >= 1 ? 0.08 : 0.02;
+    const ft = +(tempVal + drift * hr).toFixed(1);
+    const fh = +(humVal + drift * 0.6 * hr).toFixed(1);
+    let fl = 0;
+    if (ft >= c.tOptMax * 1.2 || fh >= c.rhRotCrit) fl = 3;
+    else if (ft >= c.tOptMax * 1.1 || fh >= c.rhRotWarn) fl = 2;
+    else if (ft > c.tOptMax || fh > c.rhOptMax) fl = 1;
+    const pct = Math.min(100, Math.round((ft / (c.tOptMax * 1.3)) * 50 + (fh / 100) * 50));
+    return `<div class="pred-row">
+      <div class="pred-time">T+${hr}h</div>
+      <div class="pred-label" style="color:${cols[fl]}">${RISK_NAMES[fl]}</div>
+      <div class="pred-bar-wrap"><div class="pred-bar" style="width:${pct}%;background:${cols[fl]}"></div></div>
+      <div class="pred-risk" style="color:${cols[fl]}">${ft}°C ${fh.toFixed(0)}%</div>
+    </div>`;
+  }).join('');
+}
+
+// ── OLED Mirror ──
+function updateOLED(c) {
+  const lvlStr = RISK_NAMES[riskLevel];
+  const t = tempVal.toFixed(1), h = humVal.toFixed(1);
+  const vk = (vpdVal/1000).toFixed(2);
+
+  document.getElementById('oled-0').innerHTML =
+    `${c.name.padEnd(7)} ${lvlStr}<br>Tmp: ${t} C<br>Hum: ${h} %<br>PKT: ${pktCount}`;
+  document.getElementById('oled-1').innerHTML =
+    `${c.name} THRESH<br>T: ${c.tOptMin}-${c.tOptMax}C<br>RH: ${c.rhOptMin}-${c.rhOptMax}%<br>Relay: ${relayState ? 'ON' : 'OFF'}`;
+  document.getElementById('oled-2').innerHTML =
+    `VPD: ${vk} kPa<br>Dew: ${dewVal.toFixed(1)} C<br>AH:  ${ahVal.toFixed(1)} g/m3<br>Loss: ${lossRate.toFixed(2)} %/d`;
+  document.getElementById('oled-3').innerHTML =
+    `ML PREDICTION<br>${CAUSE_NAMES[causeId].substring(0,18)}<br>30d Loss: ${loss30d.toFixed(1)}%<br>Crit: ${daysCrit >= 6000 ? '>600' : daysCrit.toFixed(0)}d`;
+}
+
+// ══════════════════════════════════════════════════
+// CHARTS (Chart.js)
+// ══════════════════════════════════════════════════
+function initChart() {
+  const ctx = document.getElementById('liveChart').getContext('2d');
+  chart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: Array.from({length: HIST_SIZE}, (_, i) => i % 20 === 0 ? '-' + (HIST_SIZE - 1 - i) : ''),
+      datasets: [
+        { label:'Temp °C',     data:[...tempHistory], borderColor:'#ff6b35', backgroundColor:'rgba(255,107,53,.04)', tension:.4, pointRadius:0, borderWidth:1.5, fill:true },
+        { label:'Humidity %',  data:[...humHistory],  borderColor:'#40c4ff', backgroundColor:'rgba(64,196,255,.04)',  tension:.4, pointRadius:0, borderWidth:1.5, fill:true },
+        { label:'VPD ×100 Pa', data:[...vpdHistory],  borderColor:'#b388ff', backgroundColor:'rgba(179,136,255,.04)',tension:.4, pointRadius:0, borderWidth:1, fill:false },
+        { label:'Dew °C',      data:[...dewHistory],  borderColor:'#69f0ae', backgroundColor:'rgba(105,240,174,.04)',tension:.4, pointRadius:0, borderWidth:1, fill:false }
+      ]
+    },
+    options: {
+      responsive:true, maintainAspectRatio:false,
+      animation:{duration:150, easing:'linear'},
+      interaction:{mode:'index',intersect:false},
+      plugins:{
+        legend:{display:false},
+        tooltip:{
+          backgroundColor:'#ffffff', titleColor:'#4b5563', bodyColor:'#1f2937',
+          borderColor:'#dbe3de', borderWidth:1, padding:10,
+          titleFont:{family:'JetBrains Mono',size:10},
+          bodyFont:{family:'JetBrains Mono',size:11}
+        }
+      },
+      scales:{
+        x:{ticks:{color:'#6b7280',font:{size:9,family:'JetBrains Mono'},maxTicksLimit:8},grid:{color:'rgba(219,227,222,.8)'},border:{color:'rgba(219,227,222,.8)'}},
+        y:{ticks:{color:'#6b7280',font:{size:9,family:'JetBrains Mono'}},grid:{color:'rgba(219,227,222,.8)'},border:{color:'rgba(219,227,222,.8)'}}
+      }
+    }
+  });
+
+  // Loss projection chart
+  const ctx2 = document.getElementById('lossChart').getContext('2d');
+  lossChart = new Chart(ctx2, {
+    type: 'line',
+    data: {
+      labels: [],
+      datasets: [
+        { label:'Loss Rate %/day', data:[], borderColor:'#ff6b35', backgroundColor:'rgba(255,107,53,.08)', tension:.3, pointRadius:1, borderWidth:1.5, fill:true, yAxisID:'y' },
+        { label:'30d Est %',       data:[], borderColor:'#b388ff', backgroundColor:'rgba(179,136,255,.08)',tension:.3, pointRadius:1, borderWidth:1.5, fill:true, yAxisID:'y2' }
+      ]
+    },
+    options: {
+      responsive:true, maintainAspectRatio:false,
+      animation:{duration:150},
+      interaction:{mode:'index',intersect:false},
+      plugins:{
+        legend:{display:false},
+        tooltip:{backgroundColor:'#ffffff',titleColor:'#4b5563',bodyColor:'#1f2937',borderColor:'#dbe3de',borderWidth:1,padding:10,titleFont:{family:'JetBrains Mono',size:10},bodyFont:{family:'JetBrains Mono',size:11}}
+      },
+      scales:{
+        x:{display:false},
+        y:{position:'left',ticks:{color:'#6b7280',font:{size:9,family:'JetBrains Mono'},callback:v=>v.toFixed(2)},grid:{color:'rgba(219,227,222,.8)'},border:{color:'rgba(219,227,222,.8)'},title:{display:true,text:'%/day',color:'#6b7280',font:{size:9,family:'JetBrains Mono'}}},
+        y2:{position:'right',ticks:{color:'#6b7280',font:{size:9,family:'JetBrains Mono'},callback:v=>v.toFixed(1)+'%'},grid:{drawOnChartArea:false},border:{color:'rgba(219,227,222,.8)'},title:{display:true,text:'30d %',color:'#6b7280',font:{size:9,family:'JetBrains Mono'}}}
+      }
+    }
+  });
+}
+
+function updateChart() {
+  if (!chart) return;
+  chart.data.datasets[0].data = [...tempHistory];
+  chart.data.datasets[1].data = [...humHistory];
+  chart.data.datasets[2].data = [...vpdHistory];
+  chart.data.datasets[3].data = [...dewHistory];
+  chart.update('none');
+}
+
+function updateLossChart() {
+  if (!lossChart || lossHistory.length < 2) return;
+  lossChart.data.labels = lossHistory.map((_, i) => i);
+  lossChart.data.datasets[0].data = lossHistory.map(l => l.rate);
+  lossChart.data.datasets[1].data = lossHistory.map(l => l.est30d);
+  lossChart.update('none');
+}
+
+// ══════════════════════════════════════════════════
+// TABS / OLED / CLOCK
+// ══════════════════════════════════════════════════
+function setTab(id, btn) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('tab-' + id).classList.add('active');
+  if (id === 'live' && chart) { chart.resize(); chart.update(); }
+}
+
+function updateClock() {
+  const n = new Date();
+  document.getElementById('clock').textContent =
+    n.getHours().toString().padStart(2,'0') + ':' +
+    n.getMinutes().toString().padStart(2,'0') + ':' +
+    n.getSeconds().toString().padStart(2,'0');
+}
+
+function tickOLED() {
+  document.querySelectorAll('.oled-slide').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.oled-dot').forEach(d => d.classList.remove('active'));
+  oledSlide = (oledSlide + 1) % 4;
+  document.getElementById('oled-' + oledSlide).classList.add('active');
+  document.getElementById('od' + oledSlide).classList.add('active');
+}
+
+// ══════════════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════════════
+window.addEventListener('load', () => {
+  if (!navigator.bluetooth) {
+    setStatus('❌ Web Bluetooth not supported. Open in Chrome or Edge on desktop/Android.', true);
+    document.getElementById('connect-btn').disabled = true;
+  }
+  initChart();
+  setInterval(tickOLED, 4000);
+  setInterval(updateClock, 1000);
+  updateClock();
+});
+</script>
+
+<!-- PWA Install Toast -->
+<div id="pwa-toast">
+  <span id="pwa-toast-icon">📲</span>
+  <span>AlliumGuard installed! Launch from your home screen.</span>
+  <span id="pwa-toast-close" onclick="document.getElementById('pwa-toast').classList.remove('show')">✕</span>
+</div>
+
+<script>
+// ══════════════════════════════════════════════════
+// PWA — Service Worker Registration & Install Prompt
+// ══════════════════════════════════════════════════
+
+let deferredInstallPrompt = null;
+
+// Register Service Worker
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js')
+      .then(reg => console.log('[PWA] Service Worker registered:', reg.scope))
+      .catch(err => console.warn('[PWA] SW registration failed:', err));
+  });
+}
+
+// Capture the install prompt
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  deferredInstallPrompt = e;
+  // Show the install button
+  const btn = document.getElementById('pwa-install-btn');
+  if (btn) btn.style.display = 'flex';
+});
+
+// Handle install button click
+function installPWA() {
+  if (!deferredInstallPrompt) {
+    // Fallback message for iOS or already installed
+    alert('To install: tap the Share button (iOS) or browser menu → "Add to Home Screen"');
+    return;
+  }
+  deferredInstallPrompt.prompt();
+  deferredInstallPrompt.userChoice.then((choice) => {
+    if (choice.outcome === 'accepted') {
+      console.log('[PWA] User accepted install');
+      document.getElementById('pwa-install-btn').style.display = 'none';
+      // Show success toast
+      const toast = document.getElementById('pwa-toast');
+      toast.classList.add('show');
+      setTimeout(() => toast.classList.remove('show'), 4000);
+    }
+    deferredInstallPrompt = null;
+  });
+}
+
+// When app is installed, hide the button
+window.addEventListener('appinstalled', () => {
+  const btn = document.getElementById('pwa-install-btn');
+  if (btn) btn.style.display = 'none';
+  deferredInstallPrompt = null;
+  console.log('[PWA] App installed successfully');
+});
+</script>
+</body>
+</html>

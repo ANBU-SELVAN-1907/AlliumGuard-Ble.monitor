@@ -1,0 +1,28 @@
+{
+  "name": "Allium Guard — Smart Crop Storage Monitor",
+  "short_name": "AlliumGuard",
+  "description": "Real-time BLE dashboard for crop storage monitoring with ML risk prediction",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#06080c",
+  "theme_color": "#00e676",
+  "categories": ["agriculture", "utilities", "productivity"],
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "screenshots": [],
+  "related_applications": [],
+  "prefer_related_applications": false
+}
